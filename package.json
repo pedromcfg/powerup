@@ -1,0 +1,18 @@
+{
+  "name": "powerup-fitness",
+  "version": "1.0.0",
+  "description": "PowerUp Fitness App - Firebase Setup",
+  "main": "setup-database.js",
+  "scripts": {
+    "setup": "node setup-database.js",
+    "add-exercises": "node add-exercises.js",
+    "add-workouts": "node add-prebuilt-workouts.js",
+    "test": "node test-connection.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  },
+  "keywords": ["fitness", "firebase", "firestore"],
+  "author": "Pedro",
+  "license": "MIT"
+}

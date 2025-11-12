@@ -1,0 +1,2050 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerUp - Fitness App</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged, createUserWithEmailAndPassword, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, doc, getDocs, getDoc, addDoc, setDoc, updateDoc, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        
+        // Configuração Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCuXgXopMsUUAhAOJTQuJ-3YpKVC6JpzFc",
+            authDomain: "powerup-a8304.firebaseapp.com",
+            projectId: "powerup-a8304",
+            storageBucket: "powerup-a8304.firebasestorage.app",
+            messagingSenderId: "791965493369",
+            appId: "1:791965493369:web:75414f84f1976d5af74ca8"
+        };
+        
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        // Disponibilizar globalmente
+        window.Firebase = { 
+            auth, 
+            db, 
+            signInWithEmailAndPassword, 
+            signInAnonymously, 
+            signOut, 
+            onAuthStateChanged,
+            createUserWithEmailAndPassword,
+            updateProfile,
+            collection,
+            doc,
+            getDocs,
+            getDoc,
+            addDoc,
+            setDoc,
+            updateDoc,
+            query,
+            where,
+            orderBy,
+            limit
+        };
+    </script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue:wght@400&display=swap');
+        
+        .font-bebas-neue {
+            font-family: 'Bebas Neue', cursive;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+        }
+        
+        .card-shadow {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .icon-hover:hover {
+            transform: scale(1.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
+        <div class="text-xl font-semibold animate-pulse text-orange-500">A carregar...</div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app" class="min-h-screen flex items-center justify-center p-4 hidden">
+        <div class="w-full max-w-sm card-shadow rounded-3xl overflow-hidden min-h-[600px] h-[90vh] relative bg-gray-800">
+            
+            <!-- Login Screen -->
+            <div id="login-screen" class="h-full flex flex-col">
+                <!-- Logo Section -->
+                <div class="flex flex-col items-center justify-center p-6 pt-12 h-1/4 relative bg-gray-800">
+                    <div class="flex flex-col items-center text-5xl sm:text-6xl font-bebas-neue relative z-10">
+                        <span class="leading-none tracking-[0.25em] text-white">TRAIN</span>
+                        <div class="flex items-center mt-[-1rem] text-orange-500">
+                            <span class="leading-none tracking-[0.25em]">UP</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Login Form -->
+                <div class="w-full flex-1 p-6 pt-8 relative flex flex-col min-h-0 gradient-bg" style="border-top-left-radius: 4rem;">
+                    <div class="mb-6">
+                        <h1 class="text-4xl font-bold text-white mb-2 font-bebas-neue tracking-widest leading-none">LOGIN</h1>
+                        <p class="text-sm text-white font-light opacity-90">A tua jornada fitness começa aqui.</p>
+                    </div>
+
+                    <form id="login-form" class="space-y-4 flex-1 flex flex-col">
+                        <div>
+                            <label for="login-email" class="block text-xs font-semibold uppercase mb-1 text-white">Email</label>
+                            <input 
+                                type="email" 
+                                id="login-email" 
+                                required
+                                class="w-full py-3 px-4 text-sm rounded-xl border-none focus:ring-0 focus:outline-none placeholder-gray-500 bg-white text-gray-900"
+                                placeholder="seu@email.com"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label for="login-password" class="block text-xs font-semibold uppercase mb-1 text-white">Senha</label>
+                            <input 
+                                type="password" 
+                                id="login-password" 
+                                required
+                                class="w-full py-3 px-4 text-sm rounded-xl border-none focus:ring-0 focus:outline-none placeholder-gray-500 bg-white text-gray-900"
+                                placeholder="••••••••"
+                            />
+                        </div>
+
+                        <button 
+                            type="submit"
+                            class="w-full py-3 mt-4 text-lg font-bold rounded-xl transition-all shadow-xl bg-white hover:scale-[1.02] active:scale-98 hover:shadow-2xl text-orange-500"
+                        >
+                            ENTRAR
+                        </button>
+                        
+                        <button 
+                            type="button" 
+                            id="register-btn"
+                            class="w-full py-3 mt-2 text-sm font-semibold rounded-xl border-2 border-white text-white hover:bg-white hover:text-orange-500 transition-all"
+                        >
+                            Criar conta
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Register Screen -->
+            <div id="register-screen" class="h-full flex flex-col hidden">
+                <!-- Logo Section -->
+                <div class="flex flex-col items-center justify-center p-6 pt-12 h-1/4 relative bg-gray-800">
+                    <div class="flex flex-col items-center text-5xl sm:text-6xl font-bebas-neue relative z-10">
+                        <span class="leading-none tracking-[0.25em] text-white">TRAIN</span>
+                        <div class="flex items-center mt-[-1rem] text-orange-500">
+                            <span class="leading-none tracking-[0.25em]">UP</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Register Form -->
+                <div class="w-full flex-1 p-6 pt-8 relative flex flex-col min-h-0 gradient-bg overflow-y-auto" style="border-top-left-radius: 4rem;">
+                    <div class="mb-6">
+                        <h1 class="text-4xl font-bold text-white mb-2 font-bebas-neue tracking-widest leading-none">REGISTO</h1>
+                        <p class="text-sm text-white font-light opacity-90">Cria a tua conta para começar.</p>
+                    </div>
+
+                    <form id="register-form" class="space-y-4 flex-1 flex flex-col">
+                        <div>
+                            <label for="register-name" class="block text-xs font-semibold uppercase mb-1 text-white">Nome</label>
+                            <input 
+                                type="text" 
+                                id="register-name" 
+                                required
+                                class="w-full py-3 px-4 text-sm rounded-xl border-none focus:ring-0 focus:outline-none placeholder-gray-500 bg-white text-gray-900"
+                                placeholder="Seu nome completo"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label for="register-email" class="block text-xs font-semibold uppercase mb-1 text-white">Email</label>
+                            <input 
+                                type="email" 
+                                id="register-email" 
+                                required
+                                class="w-full py-3 px-4 text-sm rounded-xl border-none focus:ring-0 focus:outline-none placeholder-gray-500 bg-white text-gray-900"
+                                placeholder="seu@email.com"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label for="register-password" class="block text-xs font-semibold uppercase mb-1 text-white">Senha</label>
+                            <input 
+                                type="password" 
+                                id="register-password" 
+                                required
+                                class="w-full py-3 px-4 text-sm rounded-xl border-none focus:ring-0 focus:outline-none placeholder-gray-500 bg-white text-gray-900"
+                                placeholder="••••••••"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label for="register-confirm" class="block text-xs font-semibold uppercase mb-1 text-white">Confirmar Senha</label>
+                            <input 
+                                type="password" 
+                                id="register-confirm" 
+                                required
+                                class="w-full py-3 px-4 text-sm rounded-xl border-none focus:ring-0 focus:outline-none placeholder-gray-500 bg-white text-gray-900"
+                                placeholder="••••••••"
+                            />
+                        </div>
+
+                        <!-- Privacy Toggle -->
+                        <div class="mt-4">
+                            <label class="flex items-center justify-between p-3 rounded-xl bg-white bg-opacity-10 cursor-pointer hover:bg-opacity-20 transition-all">
+                                <div class="flex items-center">
+                                    <i data-lucide="globe" class="w-5 h-5 text-white mr-3"></i>
+                                    <div>
+                                        <span class="text-sm font-semibold text-white">Conta Pública</span>
+                                        <p class="text-xs text-gray-300">Outros utilizadores podem ver o teu perfil</p>
+                                    </div>
+                                </div>
+                                <input 
+                                    type="checkbox" 
+                                    id="register-privacy" 
+                                    class="w-5 h-5 text-orange-500 bg-white border-gray-300 rounded focus:ring-orange-500 focus:ring-2"
+                                    checked
+                                />
+                            </label>
+                        </div>
+
+                        <button 
+                            type="submit"
+                            class="w-full py-3 mt-4 text-lg font-bold rounded-xl transition-all shadow-xl bg-white hover:scale-[1.02] active:scale-98 hover:shadow-2xl text-orange-500"
+                        >
+                            CRIAR CONTA
+                        </button>
+                        
+                        <button 
+                            type="button" 
+                            id="back-to-login"
+                            class="w-full py-3 mt-2 text-sm font-semibold rounded-xl border-2 border-white text-white hover:bg-white hover:text-orange-500 transition-all"
+                        >
+                            Voltar ao login
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Goal Selection Screen -->
+            <div id="goal-screen" class="h-full flex flex-col hidden">
+                <!-- Logo Section -->
+                <div class="flex flex-col items-center justify-center p-6 pt-12 h-1/4 relative bg-gray-800">
+                    <div class="flex flex-col items-center text-5xl sm:text-6xl font-bebas-neue relative z-10">
+                        <span class="leading-none tracking-[0.25em] text-white">TRAIN</span>
+                        <div class="flex items-center mt-[-1rem] text-orange-500">
+                            <span class="leading-none tracking-[0.25em]">UP</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Goal Selection Content -->
+                <div class="w-full flex-1 p-6 pt-8 relative flex flex-col min-h-0 gradient-bg overflow-y-auto" style="border-top-left-radius: 4rem;">
+                    <div class="mb-6">
+                        <h1 class="text-4xl font-bold text-white mb-2 font-bebas-neue tracking-widest leading-none">ESCOLHE O TEU OBJETIVO</h1>
+                        <p class="text-sm text-white font-light opacity-90">Seleciona o teu objetivo principal para personalizarmos a tua experiência.</p>
+                    </div>
+
+                    <div class="space-y-3 flex-1 flex flex-col">
+                        <!-- Goal Option 1: Hipertrofia -->
+                        <button 
+                            class="goal-option w-full p-4 rounded-xl bg-white bg-opacity-10 hover:bg-opacity-20 border-2 border-transparent hover:border-orange-500 transition-all text-left flex items-center"
+                            data-goal="hypertrophy"
+                        >
+                            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center mr-4">
+                                <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-white mb-1">⚡ Hipertrofia</h3>
+                                <p class="text-sm text-gray-300">Ganho de Massa Muscular</p>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 ml-2"></i>
+                        </button>
+
+                        <!-- Goal Option 2: Força -->
+                        <button 
+                            class="goal-option w-full p-4 rounded-xl bg-white bg-opacity-10 hover:bg-opacity-20 border-2 border-transparent hover:border-orange-500 transition-all text-left flex items-center"
+                            data-goal="strength"
+                        >
+                            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center mr-4">
+                                <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-white mb-1">⚡ Força</h3>
+                                <p class="text-sm text-gray-300">Desenvolvimento de força máxima</p>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 ml-2"></i>
+                        </button>
+
+                        <!-- Goal Option 3: Perda de Gordura -->
+                        <button 
+                            class="goal-option w-full p-4 rounded-xl bg-white bg-opacity-10 hover:bg-opacity-20 border-2 border-transparent hover:border-orange-500 transition-all text-left flex items-center"
+                            data-goal="fat_loss"
+                        >
+                            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center mr-4">
+                                <i data-lucide="flame" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-white mb-1">🔥 Perda de Gordura / Definição</h3>
+                                <p class="text-sm text-gray-300">Queima de gordura e definição muscular</p>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 ml-2"></i>
+                        </button>
+
+                        <!-- Goal Option 4: Resistência -->
+                        <button 
+                            class="goal-option w-full p-4 rounded-xl bg-white bg-opacity-10 hover:bg-opacity-20 border-2 border-transparent hover:border-orange-500 transition-all text-left flex items-center"
+                            data-goal="endurance"
+                        >
+                            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center mr-4">
+                                <i data-lucide="heart" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-white mb-1">❤️ Resistência / Condicionamento</h3>
+                                <p class="text-sm text-gray-300">Melhoria da capacidade cardiovascular</p>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 ml-2"></i>
+                        </button>
+
+                        <!-- Goal Option 5: Mobilidade -->
+                        <button 
+                            class="goal-option w-full p-4 rounded-xl bg-white bg-opacity-10 hover:bg-opacity-20 border-2 border-transparent hover:border-orange-500 transition-all text-left flex items-center"
+                            data-goal="mobility"
+                        >
+                            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center mr-4">
+                                <i data-lucide="activity" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-white mb-1">🧘 Mobilidade e Recuperação</h3>
+                                <p class="text-sm text-gray-300">Flexibilidade e recuperação ativa</p>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 ml-2"></i>
+                        </button>
+
+                        <!-- Goal Option 6: Treinos em Casa -->
+                        <button 
+                            class="goal-option w-full p-4 rounded-xl bg-white bg-opacity-10 hover:bg-opacity-20 border-2 border-transparent hover:border-orange-500 transition-all text-left flex items-center"
+                            data-goal="home_workouts"
+                        >
+                            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center mr-4">
+                                <i data-lucide="home" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-white mb-1">🏠 Treinos em Casa</h3>
+                                <p class="text-sm text-gray-300">Treinos sem equipamento ou com mínimo</p>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Screen -->
+            <div id="dashboard-screen" class="h-full flex flex-col hidden">
+                <!-- Header -->
+                <div class="relative p-4 pt-8 pb-10 z-0 transition-colors gradient-bg card-shadow">
+                    <!-- Settings Icons -->
+                    <div class="flex justify-end items-center mb-6 text-white text-sm font-semibold">
+                        <div class="flex space-x-4">
+                            <button class="icon-hover">
+                                <i data-lucide="share-2" class="w-6 h-6"></i>
+                            </button>
+                            <button id="settings-btn" class="icon-hover">
+                                <i data-lucide="settings" class="w-6 h-6"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Welcome Section -->
+                    <div class="flex items-center">
+                        <img id="profile-pic" src="https://placehold.co/100x100/A0A0A0/FFFFFF?text=CM" alt="Profile" class="w-16 h-16 rounded-full object-cover border-4 border-white">
+                        <div class="ml-4 text-white flex-1">
+                            <p class="text-sm opacity-90">Bem-vindo,</p>
+                            <h2 id="profile-name" class="text-2xl font-bold font-bebas-neue tracking-wide">UTILIZADOR</h2>
+                            <!-- User Goal Badge -->
+                            <div id="user-goal-badge" class="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-white bg-opacity-20 border border-white border-opacity-30">
+                                <i id="goal-icon" data-lucide="target" class="w-4 h-4 text-orange-500 mr-2"></i>
+                                <span id="goal-text" class="text-xs font-semibold text-white">Carregando objetivo...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                <div class="flex-1 overflow-y-auto px-4 pt-4 pb-16">
+                    <!-- Search Bar -->
+                    <div class="flex items-center w-full p-4 rounded-xl card-shadow mb-8 -mt-6 relative z-10 bg-gray-800">
+                        <i data-lucide="search" class="w-5 h-5 text-orange-500 mr-3"></i>
+                        <input 
+                            type="text" 
+                            placeholder="Pesquisar treinos, exercícios ou profissionais..."
+                            class="flex-1 border-none focus:ring-0 focus:outline-none placeholder-gray-500 text-sm bg-gray-800 text-white"
+                        />
+                    </div>
+
+                    <!-- Quick Panel -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-bold text-white mb-4">PAINEL RÁPIDO</h3>
+                        <div class="grid grid-cols-3 gap-3">
+                            <button class="quick-btn" data-page="measures">
+                                <div class="p-2 rounded-lg mb-1 border border-orange-500">
+                                    <i data-lucide="heart" class="w-6 h-6 text-orange-500"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-center mt-1 text-white">MEDIDAS</span>
+                            </button>
+                            
+                            <button class="quick-btn" data-page="goals">
+                                <div class="p-2 rounded-lg mb-1 border border-orange-500">
+                                    <i data-lucide="target" class="w-6 h-6 text-orange-500"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-center mt-1 text-white">METAS</span>
+                            </button>
+                            
+                            
+                            <button class="quick-btn" data-page="adaptive">
+                                <div class="p-2 rounded-lg mb-1 border border-orange-500">
+                                    <i data-lucide="shield" class="w-6 h-6 text-orange-500"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-center mt-1 text-white">ADAPTIVE ZONE</span>
+                            </button>
+                            
+                            <button class="quick-btn" data-page="community">
+                                <div class="p-2 rounded-lg mb-1 border border-orange-500">
+                                    <i data-lucide="users" class="w-6 h-6 text-orange-500"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-center mt-1 text-white">COMUNIDADE</span>
+                            </button>
+                            
+                        </div>
+                    </div>
+
+                    <!-- Workout History -->
+                    <div class="p-4 rounded-xl card-shadow mb-8 bg-gray-800 cursor-pointer hover:shadow-2xl transition-shadow" data-page="workouts">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold flex items-center text-white">
+                                <i data-lucide="bar-chart-3" class="w-6 h-6 text-orange-500 mr-2"></i>
+                                HISTÓRICO RECENTE
+                            </h3>
+                            <span class="text-sm font-semibold text-orange-500">VER TUDO</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3 mb-4 text-center">
+                            <div class="p-2 rounded-lg bg-gray-700">
+                                <p class="text-sm font-medium text-gray-400">Volume Total</p>
+                                <p id="total-volume" class="text-xl font-extrabold mt-0.5 text-white">0 kg</p>
+                            </div>
+                            <div class="p-2 rounded-lg bg-gray-700">
+                                <p class="text-sm font-medium text-gray-400">Média de Duração</p>
+                                <p id="avg-duration" class="text-xl font-extrabold mt-0.5 text-white">00:00</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Navigation -->
+            <div id="bottom-nav" class="flex justify-around items-center h-16 w-full absolute bottom-0 z-20 gradient-bg hidden" style="box-shadow: 0 -5px 20px 0 rgba(0, 0, 0, 0.4)">
+                <button class="nav-btn active" data-page="dashboard">
+                    <i data-lucide="layout-dashboard" class="w-6 h-6 text-white"></i>
+                    <span class="text-xs mt-0.5 text-white">Início</span>
+                </button>
+                <button class="nav-btn" data-page="workouts">
+                    <i data-lucide="dumbbell" class="w-6 h-6 text-white opacity-70"></i>
+                    <span class="text-xs mt-0.5 text-white opacity-70">Treinos</span>
+                </button>
+                <button class="nav-btn" data-page="community">
+                    <i data-lucide="users" class="w-6 h-6 text-white opacity-70"></i>
+                    <span class="text-xs mt-0.5 text-white opacity-70">Comunidade</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // App State
+        const AppState = {
+            currentUser: null,
+            currentPage: 'login',
+            loading: true,
+            profile: {
+                name: 'Utilizador',
+                profilePic: 'https://placehold.co/100x100/A0A0A0/FFFFFF?text=CM',
+                isPublic: true,
+                goal: null // 'hypertrophy', 'strength', 'fat_loss', 'endurance', 'mobility', 'home_workouts'
+            },
+            workoutHistory: []
+        };
+
+        // DOM Elements
+        const elements = {
+            loadingScreen: document.getElementById('loading-screen'),
+            app: document.getElementById('app'),
+            loginScreen: document.getElementById('login-screen'),
+            registerScreen: document.getElementById('register-screen'),
+            goalScreen: document.getElementById('goal-screen'),
+            dashboardScreen: document.getElementById('dashboard-screen'),
+            bottomNav: document.getElementById('bottom-nav'),
+            loginForm: document.getElementById('login-form'),
+            registerForm: document.getElementById('register-form'),
+            profileName: document.getElementById('profile-name'),
+            profilePic: document.getElementById('profile-pic'),
+            totalVolume: document.getElementById('total-volume'),
+            avgDuration: document.getElementById('avg-duration')
+        };
+
+        // Initialize App
+        function initApp() {
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Initialize Firebase auth
+            initFirebaseAuth();
+        }
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            // Login form
+            elements.loginForm.addEventListener('submit', handleLogin);
+            
+            // Register form
+            elements.registerForm.addEventListener('submit', handleRegister);
+            
+            // Navigation buttons
+            document.getElementById('register-btn').addEventListener('click', () => showScreen('register'));
+            document.getElementById('back-to-login').addEventListener('click', () => showScreen('login'));
+            document.getElementById('settings-btn').addEventListener('click', () => showScreen('settings'));
+            
+            // Quick panel buttons
+            document.querySelectorAll('.quick-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const page = e.currentTarget.dataset.page;
+                    showScreen(page);
+                });
+            });
+            
+            // Bottom navigation
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const page = e.currentTarget.dataset.page;
+                    showScreen(page);
+                    // Only update bottom nav if it's visible
+                    if (!elements.bottomNav.classList.contains('hidden')) {
+                        updateBottomNav(page);
+                    }
+                });
+            });
+            
+            // Privacy toggle in settings
+            document.addEventListener('change', (e) => {
+                if (e.target.id === 'settings-privacy') {
+                    handlePrivacyChange(e.target.checked);
+                }
+            });
+            
+            // Goal selection buttons
+            document.querySelectorAll('.goal-option').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const goal = e.currentTarget.dataset.goal;
+                    handleGoalSelection(goal);
+                });
+            });
+        }
+
+        // Firebase Authentication
+        function initFirebaseAuth() {
+            if (typeof window.Firebase === 'undefined') {
+                console.error('Firebase não carregado');
+                showLoading(false);
+                return;
+            }
+
+            window.Firebase.onAuthStateChanged(window.Firebase.auth, async (user) => {
+                if (user) {
+                    AppState.currentUser = user;
+                    AppState.profile.name = user.displayName || 'Utilizador';
+                    // Load user data from Firestore first
+                    await loadUserData();
+                    
+                    // Check if user has selected a goal
+                    if (!AppState.profile.goal) {
+                        // User hasn't selected a goal yet, show goal selection screen
+                        showScreen('goal');
+                    } else {
+                        // User has a goal, show dashboard
+                        showScreen('dashboard');
+                    }
+                } else {
+                    showScreen('login');
+                }
+                showLoading(false);
+            });
+        }
+
+        // Handle Login
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            try {
+                await window.Firebase.signInWithEmailAndPassword(window.Firebase.auth, email, password);
+                console.log('Login bem-sucedido');
+            } catch (error) {
+                console.error('Erro no login:', error);
+                alert('Erro no login: ' + error.message);
+            }
+        }
+
+        // Handle Register
+        async function handleRegister(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirm = document.getElementById('register-confirm').value;
+            const isPublic = document.getElementById('register-privacy').checked;
+            
+            if (password !== confirm) {
+                alert('As senhas não coincidem');
+                return;
+            }
+            
+            if (password.length < 6) {
+                alert('A senha deve ter pelo menos 6 caracteres');
+                return;
+            }
+            
+            try {
+                const userCredential = await window.Firebase.createUserWithEmailAndPassword(window.Firebase.auth, email, password);
+                await window.Firebase.updateProfile(userCredential.user, { displayName: name });
+                
+                // Create user document in Firestore
+                await window.Firebase.setDoc(window.Firebase.doc(window.Firebase.db, 'users', userCredential.user.uid), {
+                    uid: userCredential.user.uid,
+                    name: name,
+                    email: email,
+                    isPublic: isPublic,
+                    createdAt: new Date()
+                    // goal will be set when user selects it
+                });
+                
+                console.log('Registo bem-sucedido');
+                // Show goal selection screen after successful registration
+                showScreen('goal');
+            } catch (error) {
+                console.error('Erro no registo:', error);
+                alert('Erro no registo: ' + error.message);
+            }
+        }
+
+        // Show Screen
+        function showScreen(screen) {
+            console.log('A mostrar ecrã:', screen);
+            // Hide all screens
+            elements.loginScreen.classList.add('hidden');
+            elements.registerScreen.classList.add('hidden');
+            elements.goalScreen.classList.add('hidden');
+            elements.dashboardScreen.classList.add('hidden');
+            
+            // Show selected screen
+            switch(screen) {
+                case 'login':
+                    elements.loginScreen.classList.remove('hidden');
+                    elements.bottomNav.classList.add('hidden');
+                    break;
+                case 'register':
+                    elements.registerScreen.classList.remove('hidden');
+                    elements.bottomNav.classList.add('hidden');
+                    break;
+                case 'goal':
+                    elements.goalScreen.classList.remove('hidden');
+                    elements.bottomNav.classList.add('hidden');
+                    // Initialize icons when showing goal screen
+                    setTimeout(() => {
+                        if (typeof lucide !== 'undefined') {
+                            lucide.createIcons();
+                        }
+                    }, 100);
+                    break;
+                case 'dashboard':
+                case 'home':
+                    // Show main dashboard
+                    elements.dashboardScreen.classList.remove('hidden');
+                    elements.bottomNav.classList.remove('hidden');
+                    restoreDashboard();
+                    loadDashboardData();
+                    updateBottomNav('dashboard');
+                    // Ensure goal badge is updated after a short delay
+                    setTimeout(() => {
+                        updateGoalBadge();
+                    }, 500);
+                    break;
+                case 'settings':
+                    // Show settings screen
+                    showSettingsScreen();
+                    elements.bottomNav.classList.remove('hidden');
+                    updateBottomNav('settings');
+                    break;
+                case 'workouts':
+                    // Show workouts screen
+                    showWorkoutsScreen();
+                    elements.bottomNav.classList.remove('hidden');
+                    updateBottomNav('workouts');
+                    break;
+                default:
+                    // For other screens, show placeholder
+                    elements.dashboardScreen.classList.remove('hidden');
+                    elements.dashboardScreen.innerHTML = `
+                        <div class="p-4 pt-8 h-full overflow-y-auto pb-16 bg-gray-900 text-white">
+                            <div class="text-center">
+                                <h2 class="text-2xl font-bold mb-4">${screen.charAt(0).toUpperCase() + screen.slice(1)}</h2>
+                                <p class="text-gray-400">Esta funcionalidade estará disponível em breve.</p>
+                            </div>
+                        </div>
+                    `;
+                    elements.bottomNav.classList.remove('hidden');
+                    updateBottomNav(screen);
+            }
+            
+            AppState.currentPage = screen;
+        }
+
+
+        // Restore Dashboard
+        function restoreDashboard() {
+            elements.dashboardScreen.innerHTML = `
+                <!-- Header -->
+                <div class="relative p-4 pt-8 pb-10 z-0 transition-colors gradient-bg card-shadow">
+                    <!-- Settings Icons -->
+                    <div class="flex justify-end items-center mb-6 text-white text-sm font-semibold">
+                        <div class="flex space-x-4">
+                            <button class="icon-hover">
+                                <i data-lucide="share-2" class="w-6 h-6"></i>
+                            </button>
+                            <button id="settings-btn" class="icon-hover">
+                                <i data-lucide="settings" class="w-6 h-6"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Welcome Section -->
+                    <div class="flex items-center">
+                        <img id="profile-pic" src="https://placehold.co/100x100/A0A0A0/FFFFFF?text=CM" alt="Profile" class="w-16 h-16 rounded-full object-cover border-4 border-white">
+                        <div class="ml-4 text-white flex-1">
+                            <p class="text-sm opacity-90">Bem-vindo,</p>
+                            <h2 id="profile-name" class="text-2xl font-bold font-bebas-neue tracking-wide">UTILIZADOR</h2>
+                            <!-- User Goal Badge -->
+                            <div id="user-goal-badge" class="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-white bg-opacity-20 border border-white border-opacity-30">
+                                <i id="goal-icon" data-lucide="target" class="w-4 h-4 text-orange-500 mr-2"></i>
+                                <span id="goal-text" class="text-xs font-semibold text-white">Carregando objetivo...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                <div class="flex-1 overflow-y-auto px-4 pt-4 pb-16">
+                    <!-- Search Bar -->
+                    <div class="flex items-center w-full p-4 rounded-xl card-shadow mb-8 -mt-6 relative z-10 bg-gray-800">
+                        <i data-lucide="search" class="w-5 h-5 text-orange-500 mr-3"></i>
+                        <input 
+                            type="text" 
+                            placeholder="Pesquisar treinos, exercícios ou profissionais..."
+                            class="flex-1 border-none focus:ring-0 focus:outline-none placeholder-gray-500 text-sm bg-gray-800 text-white"
+                        />
+                    </div>
+
+                    <!-- Quick Panel -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-bold text-white mb-4">PAINEL RÁPIDO</h3>
+                        <div class="grid grid-cols-3 gap-3">
+                            <button class="quick-btn" data-page="measures">
+                                <div class="p-2 rounded-lg mb-1 border border-orange-500">
+                                    <i data-lucide="heart" class="w-6 h-6 text-orange-500"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-center mt-1 text-white">MEDIDAS</span>
+                            </button>
+                            
+                            <button class="quick-btn" data-page="goals">
+                                <div class="p-2 rounded-lg mb-1 border border-orange-500">
+                                    <i data-lucide="target" class="w-6 h-6 text-orange-500"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-center mt-1 text-white">METAS</span>
+                            </button>
+                            
+                            
+                            <button class="quick-btn" data-page="adaptive">
+                                <div class="p-2 rounded-lg mb-1 border border-orange-500">
+                                    <i data-lucide="shield" class="w-6 h-6 text-orange-500"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-center mt-1 text-white">ADAPTIVE ZONE</span>
+                            </button>
+                            
+                            <button class="quick-btn" data-page="community">
+                                <div class="p-2 rounded-lg mb-1 border border-orange-500">
+                                    <i data-lucide="users" class="w-6 h-6 text-orange-500"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-center mt-1 text-white">COMUNIDADE</span>
+                            </button>
+                            
+                        </div>
+                    </div>
+
+                    <!-- Workout History -->
+                    <div class="p-4 rounded-xl card-shadow mb-8 bg-gray-800 cursor-pointer hover:shadow-2xl transition-shadow" data-page="workouts">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold flex items-center text-white">
+                                <i data-lucide="bar-chart-3" class="w-6 h-6 text-orange-500 mr-2"></i>
+                                HISTÓRICO RECENTE
+                            </h3>
+                            <span class="text-sm font-semibold text-orange-500">VER TUDO</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3 mb-4 text-center">
+                            <div class="p-2 rounded-lg bg-gray-700">
+                                <p class="text-sm font-medium text-gray-400">Volume Total</p>
+                                <p id="total-volume" class="text-xl font-extrabold mt-0.5 text-white">0 kg</p>
+                            </div>
+                            <div class="p-2 rounded-lg bg-gray-700">
+                                <p class="text-sm font-medium text-gray-400">Média de Duração</p>
+                                <p id="avg-duration" class="text-xl font-extrabold mt-0.5 text-white">00:00</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Re-setup event listeners for the restored dashboard
+            setupDashboardEventListeners();
+            
+            // Re-initialize icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+            
+            // Update DOM element references after restoring dashboard
+            elements.profileName = document.getElementById('profile-name');
+            elements.profilePic = document.getElementById('profile-pic');
+            
+            // Update profile and goal badge (with small delay to ensure DOM is ready)
+            setTimeout(() => {
+                updateProfile();
+            }, 100);
+        }
+
+        // Setup Dashboard Event Listeners
+        function setupDashboardEventListeners() {
+            // Quick panel buttons
+            document.querySelectorAll('.quick-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const page = e.currentTarget.dataset.page;
+                    showScreen(page);
+                });
+            });
+            
+            // Settings button
+            const settingsBtn = document.getElementById('settings-btn');
+            if (settingsBtn) {
+                settingsBtn.addEventListener('click', () => showScreen('settings'));
+            }
+        }
+
+        // Show Settings Screen
+        function showSettingsScreen() {
+            elements.dashboardScreen.classList.remove('hidden');
+            elements.dashboardScreen.innerHTML = `
+                <div class="p-4 pt-8 h-full overflow-y-auto pb-16 bg-gray-900 text-white">
+                    <header class="flex items-center mb-10">
+                        <button onclick="showScreen('dashboard')" class="mr-4 icon-hover">
+                            <i data-lucide="chevron-left" class="w-6 h-6 text-orange-500"></i>
+                        </button>
+                        <h2 class="text-3xl font-bold font-bebas-neue tracking-wider">CONFIGURAÇÕES</h2>
+                    </header>
+                    
+                    <div class="space-y-4">
+                        <!-- Profile Section -->
+                        <div class="p-4 rounded-xl card-shadow bg-gray-800">
+                            <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+                                <i data-lucide="user" class="w-5 h-5 text-orange-500 mr-2"></i>
+                                Perfil
+                            </h3>
+                            <div class="flex items-center space-x-4">
+                                <img id="settings-profile-pic" src="https://placehold.co/60x60/A0A0A0/FFFFFF?text=CM" alt="Profile" class="w-15 h-15 rounded-full object-cover border-2 border-orange-500">
+                                <div>
+                                    <p class="text-sm text-gray-400">Utilizador</p>
+                                    <p id="settings-profile-name" class="text-lg font-semibold text-white">PEDRO GRILO</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Account Section -->
+                        <div class="p-4 rounded-xl card-shadow bg-gray-800">
+                            <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+                                <i data-lucide="settings" class="w-5 h-5 text-orange-500 mr-2"></i>
+                                Conta
+                            </h3>
+                            <div class="space-y-3">
+                                <button class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-700 transition-colors">
+                                    <div class="flex items-center">
+                                        <i data-lucide="edit" class="w-5 h-5 text-orange-500 mr-3"></i>
+                                        <span class="text-white">Editar Perfil</span>
+                                    </div>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                                </button>
+                                
+                                <button class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-700 transition-colors">
+                                    <div class="flex items-center">
+                                        <i data-lucide="lock" class="w-5 h-5 text-orange-500 mr-3"></i>
+                                        <span class="text-white">Alterar Senha</span>
+                                    </div>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                                </button>
+                                
+                                <button class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-700 transition-colors">
+                                    <div class="flex items-center">
+                                        <i data-lucide="bell" class="w-5 h-5 text-orange-500 mr-3"></i>
+                                        <span class="text-white">Notificações</span>
+                                    </div>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                                </button>
+                                
+                                <!-- Privacy Toggle -->
+                                <div class="flex items-center justify-between p-3 rounded-lg">
+                                    <div class="flex items-center">
+                                        <i data-lucide="globe" class="w-5 h-5 text-orange-500 mr-3"></i>
+                                        <div>
+                                            <span class="text-white">Conta Pública</span>
+                                            <p class="text-xs text-gray-400">Outros utilizadores podem ver o teu perfil</p>
+                                        </div>
+                                    </div>
+                                    <input 
+                                        type="checkbox" 
+                                        id="settings-privacy" 
+                                        class="w-5 h-5 text-orange-500 bg-gray-700 border-gray-600 rounded focus:ring-orange-500 focus:ring-2"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- App Section -->
+                        <div class="p-4 rounded-xl card-shadow bg-gray-800">
+                            <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+                                <i data-lucide="smartphone" class="w-5 h-5 text-orange-500 mr-2"></i>
+                                Aplicação
+                            </h3>
+                            <div class="space-y-3">
+                                <button class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-700 transition-colors">
+                                    <div class="flex items-center">
+                                        <i data-lucide="moon" class="w-5 h-5 text-orange-500 mr-3"></i>
+                                        <span class="text-white">Tema</span>
+                                    </div>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                                </button>
+                                
+                                <button class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-700 transition-colors">
+                                    <div class="flex items-center">
+                                        <i data-lucide="help-circle" class="w-5 h-5 text-orange-500 mr-3"></i>
+                                        <span class="text-white">Ajuda</span>
+                                    </div>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                                </button>
+                                
+                                <button class="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-700 transition-colors">
+                                    <div class="flex items-center">
+                                        <i data-lucide="info" class="w-5 h-5 text-orange-500 mr-3"></i>
+                                        <span class="text-white">Sobre</span>
+                                    </div>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Logout Section -->
+                        <div class="p-4 rounded-xl card-shadow bg-red-900/20 border border-red-500/30">
+                            <button id="logout-btn" class="w-full flex items-center justify-center p-4 rounded-lg bg-red-600 hover:bg-red-700 transition-colors">
+                                <i data-lucide="log-out" class="w-5 h-5 text-white mr-3"></i>
+                                <span class="text-white font-semibold">SAIR DA CONTA</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Setup logout button
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', handleLogout);
+            }
+            
+            // Update profile info in settings
+            const settingsProfileName = document.getElementById('settings-profile-name');
+            const settingsProfilePic = document.getElementById('settings-profile-pic');
+            if (settingsProfileName) {
+                settingsProfileName.textContent = AppState.profile.name.toUpperCase();
+            }
+            if (settingsProfilePic) {
+                settingsProfilePic.src = AppState.profile.profilePic;
+            }
+            
+            // Re-initialize icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        // Show Workouts Screen
+        async function showWorkoutsScreen() {
+            elements.dashboardScreen.classList.remove('hidden');
+            elements.dashboardScreen.innerHTML = `
+                <div class="p-4 pt-8 h-full overflow-y-auto pb-16 bg-gray-900 text-white">
+                    <header class="flex items-center mb-6">
+                        <button onclick="showScreen('dashboard')" class="mr-4 icon-hover">
+                            <i data-lucide="chevron-left" class="w-6 h-6 text-orange-500"></i>
+                        </button>
+                        <h2 class="text-3xl font-bold font-bebas-neue tracking-wider">TREINOS</h2>
+                    </header>
+                    
+                    <!-- Create Custom Workout Button -->
+                    <button id="create-workout-btn" class="w-full mb-6 p-4 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 transition-all shadow-lg flex items-center justify-center">
+                        <i data-lucide="plus" class="w-6 h-6 text-white mr-2"></i>
+                        <span class="text-white font-bold text-lg">Criar Treino Personalizado</span>
+                    </button>
+                    
+                    <!-- Prebuilt Workouts Section -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                            <i data-lucide="sparkles" class="w-5 h-5 text-orange-500 mr-2"></i>
+                            Treinos Recomendados
+                        </h3>
+                        <div id="prebuilt-workouts-list" class="space-y-3">
+                            <div class="text-center py-8 text-gray-400">
+                                <i data-lucide="loader" class="w-8 h-8 mx-auto mb-2 animate-spin"></i>
+                                <p>A carregar treinos...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Custom Workouts Section -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                            <i data-lucide="dumbbell" class="w-5 h-5 text-orange-500 mr-2"></i>
+                            Os Meus Treinos
+                        </h3>
+                        <div id="custom-workouts-list" class="space-y-3">
+                            <div class="text-center py-8 text-gray-400">
+                                <i data-lucide="loader" class="w-8 h-8 mx-auto mb-2 animate-spin"></i>
+                                <p>A carregar treinos...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Setup event listeners
+            const createWorkoutBtn = document.getElementById('create-workout-btn');
+            if (createWorkoutBtn) {
+                createWorkoutBtn.addEventListener('click', () => showCreateWorkoutScreen());
+            }
+            
+            // Load workouts
+            await loadPrebuiltWorkouts();
+            await loadCustomWorkouts();
+            
+            // Re-initialize icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        // Handle Logout
+        async function handleLogout() {
+            if (confirm('Tens a certeza que queres sair da conta?')) {
+                try {
+                    await window.Firebase.signOut(window.Firebase.auth);
+                    console.log('Logout bem-sucedido');
+                    // The auth state change will handle showing the login screen
+                } catch (error) {
+                    console.error('Erro no logout:', error);
+                    alert('Erro ao sair da conta: ' + error.message);
+                }
+            }
+        }
+
+        // Handle Goal Selection
+        async function handleGoalSelection(goal) {
+            try {
+                // Get current user from Firebase Auth
+                const currentUser = window.Firebase.auth.currentUser || AppState.currentUser;
+                
+                if (currentUser) {
+                    // Update AppState
+                    AppState.currentUser = currentUser;
+                    AppState.profile.goal = goal;
+                    
+                    // Update Firestore
+                    await window.Firebase.updateDoc(
+                        window.Firebase.doc(window.Firebase.db, 'users', currentUser.uid),
+                        { goal: goal }
+                    );
+                    
+                    console.log('Objetivo selecionado:', goal);
+                    
+                    // Load user data and show dashboard
+                    await loadUserData();
+                    showScreen('dashboard');
+                } else {
+                    console.error('Utilizador não encontrado');
+                    alert('Erro: Utilizador não encontrado');
+                }
+            } catch (error) {
+                console.error('Erro ao guardar objetivo:', error);
+                alert('Erro ao guardar objetivo: ' + error.message);
+            }
+        }
+
+        // Handle Privacy Change
+        async function handlePrivacyChange(isPublic) {
+            try {
+                if (AppState.currentUser) {
+                    // Update local state
+                    AppState.profile.isPublic = isPublic;
+                    
+                    // Update Firestore
+                    await window.Firebase.updateDoc(
+                        window.Firebase.doc(window.Firebase.db, 'users', AppState.currentUser.uid),
+                        { isPublic: isPublic }
+                    );
+                    
+                    console.log('Configuração de privacidade atualizada para:', isPublic);
+                    
+                    // Show feedback
+                    const status = isPublic ? 'pública' : 'privada';
+                    alert(`Conta alterada para ${status}`);
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar configuração de privacidade:', error);
+                alert('Erro ao alterar configuração de privacidade: ' + error.message);
+                
+                // Revert toggle on error
+                const toggle = document.getElementById('settings-privacy');
+                if (toggle) {
+                    toggle.checked = AppState.profile.isPublic;
+                }
+            }
+        }
+
+        // Update Profile
+        function updateProfile() {
+            console.log('A atualizar perfil com nome:', AppState.profile.name);
+            if (elements.profileName) {
+                elements.profileName.textContent = AppState.profile.name.toUpperCase();
+                console.log('Nome do perfil atualizado no DOM');
+            } else {
+                console.error('Elemento do nome do perfil não encontrado');
+            }
+            if (elements.profilePic) {
+                elements.profilePic.src = AppState.profile.profilePic;
+            }
+            
+            // Update privacy toggle in settings
+            const settingsPrivacyToggle = document.getElementById('settings-privacy');
+            if (settingsPrivacyToggle) {
+                settingsPrivacyToggle.checked = AppState.profile.isPublic;
+                console.log('Toggle de privacidade atualizado para:', AppState.profile.isPublic);
+            }
+            
+            // Update goal badge
+            updateGoalBadge();
+        }
+
+        // Update Goal Badge
+        function updateGoalBadge() {
+            const goalBadge = document.getElementById('user-goal-badge');
+            const goalText = document.getElementById('goal-text');
+            const goalIcon = document.getElementById('goal-icon');
+            
+            if (!goalBadge || !goalText || !goalIcon) {
+                console.log('Elementos do badge do objetivo não encontrados. Tentando novamente...');
+                // Try again after a short delay if elements don't exist yet
+                setTimeout(() => {
+                    const retryBadge = document.getElementById('user-goal-badge');
+                    const retryText = document.getElementById('goal-text');
+                    const retryIcon = document.getElementById('goal-icon');
+                    if (retryBadge && retryText && retryIcon) {
+                        updateGoalBadge();
+                    }
+                }, 200);
+                return;
+            }
+            
+            const goal = AppState.profile.goal;
+            console.log('Atualizando badge do objetivo. Objetivo atual:', goal);
+            
+            if (!goal) {
+                console.log('Nenhum objetivo definido, escondendo badge');
+                goalBadge.style.display = 'none';
+                return;
+            }
+            
+            goalBadge.style.display = 'inline-flex';
+            
+            // Map goal values to display text and icons
+            // Support both old format (gain_muscle) and new format (hypertrophy)
+            const goalMap = {
+                'hypertrophy': {
+                    text: '⚡ Hipertrofia',
+                    icon: 'zap'
+                },
+                'gain_muscle': {
+                    text: '⚡ Hipertrofia',
+                    icon: 'zap'
+                },
+                'strength': {
+                    text: '⚡ Força',
+                    icon: 'zap'
+                },
+                'fat_loss': {
+                    text: '🔥 Perda de Gordura',
+                    icon: 'flame'
+                },
+                'endurance': {
+                    text: '❤️ Resistência',
+                    icon: 'heart'
+                },
+                'mobility': {
+                    text: '🧘 Mobilidade',
+                    icon: 'activity'
+                },
+                'home_workouts': {
+                    text: '🏠 Treinos em Casa',
+                    icon: 'home'
+                }
+            };
+            
+            const goalInfo = goalMap[goal];
+            if (goalInfo) {
+                goalText.textContent = goalInfo.text;
+                goalIcon.setAttribute('data-lucide', goalInfo.icon);
+                
+                // Re-initialize icon
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+                
+                console.log('Badge do objetivo atualizado para:', goalInfo.text);
+            } else {
+                console.log('Objetivo não reconhecido:', goal);
+                goalBadge.style.display = 'none';
+            }
+        }
+
+        // Update Bottom Navigation
+        function updateBottomNav(activePage) {
+            // Check if bottom nav exists and is visible
+            if (!elements.bottomNav || elements.bottomNav.classList.contains('hidden')) {
+                return;
+            }
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (!btn) return;
+                
+                btn.classList.remove('active');
+                const icon = btn.querySelector('i');
+                const text = btn.querySelector('span');
+                
+                if (btn.dataset.page === activePage) {
+                    if (icon) icon.classList.remove('opacity-70');
+                    if (text) text.classList.remove('opacity-70');
+                } else {
+                    if (icon) icon.classList.add('opacity-70');
+                    if (text) text.classList.add('opacity-70');
+                }
+            });
+        }
+
+        // Load User Data from Firestore
+        async function loadUserData() {
+            try {
+                if (AppState.currentUser) {
+                    console.log('A carregar dados do utilizador para UID:', AppState.currentUser.uid);
+                    const userDoc = await window.Firebase.getDoc(window.Firebase.doc(window.Firebase.db, 'users', AppState.currentUser.uid));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        console.log('Dados do utilizador do Firestore:', userData);
+                        AppState.profile.name = userData.name || AppState.currentUser.displayName || 'Utilizador';
+                        AppState.profile.email = userData.email || AppState.currentUser.email || '';
+                        AppState.profile.isPublic = userData.isPublic !== undefined ? userData.isPublic : true;
+                        AppState.profile.goal = userData.goal || null;
+                        console.log('Nome do perfil atualizado para:', AppState.profile.name);
+                        console.log('Privacidade do perfil atualizada para:', AppState.profile.isPublic);
+                        console.log('Objetivo do perfil atualizado para:', AppState.profile.goal);
+                        updateProfile();
+                    } else {
+                        console.log('Nenhum documento de utilizador encontrado no Firestore');
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao carregar dados do utilizador:', error);
+            }
+        }
+
+        // Load Dashboard Data
+        async function loadDashboardData() {
+            try {
+                // Load user data from Firestore
+                await loadUserData();
+                
+                // Ensure goal badge is updated after loading user data
+                setTimeout(() => {
+                    updateGoalBadge();
+                }, 300);
+                
+                // Load workout history
+                if (AppState.currentUser) {
+                    const workoutsQuery = window.Firebase.query(
+                        window.Firebase.collection(window.Firebase.db, 'workouts'),
+                        window.Firebase.where('userId', '==', AppState.currentUser.uid),
+                        window.Firebase.orderBy('date', 'desc')
+                    );
+                    const workoutsSnapshot = await window.Firebase.getDocs(workoutsQuery);
+                    AppState.workoutHistory = workoutsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                }
+                
+                updateDashboardStats();
+            } catch (error) {
+                console.error('Erro ao carregar dados do dashboard:', error);
+            }
+        }
+
+        // Update Dashboard Stats
+        function updateDashboardStats() {
+            const totalVolume = AppState.workoutHistory.reduce((sum, workout) => sum + (workout.volume || 0), 0);
+            const avgDuration = AppState.workoutHistory.length > 0 
+                ? AppState.workoutHistory.reduce((sum, workout) => sum + (workout.durationSeconds || 0), 0) / AppState.workoutHistory.length 
+                : 0;
+            
+            elements.totalVolume.textContent = totalVolume.toLocaleString() + ' kg';
+            elements.avgDuration.textContent = avgDuration > 0 
+                ? new Date(avgDuration * 1000).toISOString().substr(14, 5) 
+                : '00:00';
+        }
+
+        // Load Prebuilt Workouts
+        async function loadPrebuiltWorkouts() {
+            try {
+                let goal = AppState.profile.goal;
+                if (!goal) {
+                    document.getElementById('prebuilt-workouts-list').innerHTML = `
+                        <div class="text-center py-8 text-gray-400">
+                            <p>Seleciona um objetivo primeiro para ver treinos recomendados.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Normalize goal values (support old format gain_muscle -> hypertrophy)
+                if (goal === 'gain_muscle') {
+                    goal = 'hypertrophy';
+                }
+
+                const workoutsRef = window.Firebase.collection(window.Firebase.db, 'prebuilt_workouts');
+                const q = window.Firebase.query(workoutsRef, window.Firebase.where('goal', '==', goal));
+                const querySnapshot = await window.Firebase.getDocs(q);
+
+                const workoutsList = document.getElementById('prebuilt-workouts-list');
+                if (querySnapshot.empty) {
+                    workoutsList.innerHTML = `
+                        <div class="text-center py-8 text-gray-400">
+                            <p>Nenhum treino recomendado encontrado.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                workoutsList.innerHTML = '';
+                querySnapshot.forEach((doc) => {
+                    const workout = doc.data();
+                    const workoutCard = createWorkoutCard(workout, doc.id, true);
+                    workoutsList.appendChild(workoutCard);
+                });
+
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar workouts pré-feitos:', error);
+                let errorMessage = 'Erro ao carregar treinos.';
+                if (error.message && error.message.includes('permissions')) {
+                    errorMessage = 'Erro de permissões. Verifica se as regras do Firestore foram publicadas corretamente.';
+                } else if (error.message) {
+                    errorMessage = `Erro: ${error.message}`;
+                }
+                document.getElementById('prebuilt-workouts-list').innerHTML = `
+                    <div class="text-center py-8 text-red-400">
+                        <i data-lucide="alert-circle" class="w-12 h-12 mx-auto mb-3 text-red-500"></i>
+                        <p class="font-semibold mb-2">${errorMessage}</p>
+                        <p class="text-sm text-gray-400 mt-2">Verifica o ficheiro COMO-APLICAR-REGRAS-FIRESTORE.md</p>
+                    </div>
+                `;
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            }
+        }
+
+        // Load Custom Workouts
+        async function loadCustomWorkouts() {
+            try {
+                if (!AppState.currentUser) {
+                    document.getElementById('custom-workouts-list').innerHTML = `
+                        <div class="text-center py-8 text-gray-400">
+                            <p>Faz login para ver os teus workouts.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const workoutsRef = window.Firebase.collection(window.Firebase.db, 'workouts');
+                const q = window.Firebase.query(
+                    workoutsRef,
+                    window.Firebase.where('userId', '==', AppState.currentUser.uid),
+                    window.Firebase.where('isPrebuilt', '==', false)
+                );
+                const querySnapshot = await window.Firebase.getDocs(q);
+
+                const workoutsList = document.getElementById('custom-workouts-list');
+                if (querySnapshot.empty) {
+                    workoutsList.innerHTML = `
+                        <div class="text-center py-8 text-gray-400">
+                            <p>Ainda não criaste nenhum treino personalizado.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                workoutsList.innerHTML = '';
+                querySnapshot.forEach((doc) => {
+                    const workout = doc.data();
+                    const workoutCard = createWorkoutCard(workout, doc.id, false);
+                    workoutsList.appendChild(workoutCard);
+                });
+
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar workouts personalizados:', error);
+                document.getElementById('custom-workouts-list').innerHTML = `
+                    <div class="text-center py-8 text-red-400">
+                        <p>Erro ao carregar treinos: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Create Workout Card
+        function createWorkoutCard(workout, workoutId, isPrebuilt) {
+            const card = document.createElement('div');
+            card.className = 'p-4 rounded-xl card-shadow bg-gray-800 cursor-pointer hover:shadow-2xl transition-all';
+            card.innerHTML = `
+                <div class="flex items-start justify-between mb-2">
+                    <div class="flex-1">
+                        <h4 class="text-lg font-bold text-white mb-1">${workout.name}</h4>
+                        ${workout.description ? `<p class="text-sm text-gray-400 mb-2">${workout.description}</p>` : ''}
+                        <div class="flex items-center space-x-4 text-xs text-gray-400">
+                            ${workout.durationMinutes ? `<span><i data-lucide="clock" class="w-4 h-4 inline"></i> ${workout.durationMinutes} min</span>` : ''}
+                            ${workout.difficulty ? `<span><i data-lucide="trending-up" class="w-4 h-4 inline"></i> ${workout.difficulty}</span>` : ''}
+                            ${workout.exercises ? `<span><i data-lucide="dumbbell" class="w-4 h-4 inline"></i> ${workout.exercises.length} exercícios</span>` : ''}
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 ml-2"></i>
+                </div>
+            `;
+            
+            card.addEventListener('click', () => viewWorkoutDetails(workout, workoutId, isPrebuilt));
+            return card;
+        }
+
+        // View Workout Details
+        function viewWorkoutDetails(workout, workoutId, isPrebuilt) {
+            elements.dashboardScreen.classList.remove('hidden');
+            
+            // Format difficulty
+            const difficultyMap = {
+                'beginner': 'Iniciante',
+                'intermediate': 'Intermediário',
+                'advanced': 'Avançado'
+            };
+            const difficultyText = difficultyMap[workout.difficulty] || workout.difficulty;
+            
+            // Build exercises list HTML
+            let exercisesHTML = '';
+            if (workout.exercises && workout.exercises.length > 0) {
+                workout.exercises.forEach((exercise, index) => {
+                    exercisesHTML += `
+                        <div class="p-4 rounded-xl bg-gray-800 mb-3 border border-gray-700">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex-1">
+                                    <div class="flex items-center mb-2">
+                                        <span class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-sm mr-3">${index + 1}</span>
+                                        <h4 class="text-lg font-bold text-white">${exercise.name}</h4>
+                                    </div>
+                                    ${exercise.notes ? `<p class="text-sm text-gray-400 ml-11 mb-2">${exercise.notes}</p>` : ''}
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3 ml-11">
+                                <div class="bg-gray-700 rounded-lg p-2 text-center">
+                                    <p class="text-xs text-gray-400 mb-1">Séries</p>
+                                    <p class="text-white font-bold">${exercise.sets || 'N/A'}</p>
+                                </div>
+                                <div class="bg-gray-700 rounded-lg p-2 text-center">
+                                    <p class="text-xs text-gray-400 mb-1">Reps</p>
+                                    <p class="text-white font-bold">${exercise.reps || 'N/A'}</p>
+                                </div>
+                                <div class="bg-gray-700 rounded-lg p-2 text-center">
+                                    <p class="text-xs text-gray-400 mb-1">Descanso</p>
+                                    <p class="text-white font-bold">${exercise.restSeconds ? exercise.restSeconds + 's' : 'N/A'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                exercisesHTML = `
+                    <div class="text-center py-8 text-gray-400">
+                        <p>Nenhum exercício definido para este treino.</p>
+                    </div>
+                `;
+            }
+            
+            elements.dashboardScreen.innerHTML = `
+                <div class="p-4 pt-8 h-full overflow-y-auto pb-16 bg-gray-900 text-white">
+                    <header class="flex items-center mb-6">
+                        <button id="back-to-workouts-btn" class="mr-4 icon-hover">
+                            <i data-lucide="chevron-left" class="w-6 h-6 text-orange-500"></i>
+                        </button>
+                        <h2 class="text-3xl font-bold font-bebas-neue tracking-wider">DETALHES DO TREINO</h2>
+                    </header>
+                    
+                    <!-- Workout Header -->
+                    <div class="mb-6 p-4 rounded-xl card-shadow bg-gradient-to-r from-orange-500 to-orange-600">
+                        <h3 class="text-2xl font-bold text-white mb-2">${workout.name}</h3>
+                        ${workout.description ? `<p class="text-white text-sm opacity-90 mb-3">${workout.description}</p>` : ''}
+                        <div class="flex items-center space-x-4 text-sm">
+                            ${workout.durationMinutes ? `
+                                <div class="flex items-center text-white">
+                                    <i data-lucide="clock" class="w-4 h-4 mr-2"></i>
+                                    <span>${workout.durationMinutes} min</span>
+                                </div>
+                            ` : ''}
+                            ${workout.difficulty ? `
+                                <div class="flex items-center text-white">
+                                    <i data-lucide="trending-up" class="w-4 h-4 mr-2"></i>
+                                    <span>${difficultyText}</span>
+                                </div>
+                            ` : ''}
+                            ${workout.exercises ? `
+                                <div class="flex items-center text-white">
+                                    <i data-lucide="dumbbell" class="w-4 h-4 mr-2"></i>
+                                    <span>${workout.exercises.length} exercícios</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <!-- Exercises List -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                            <i data-lucide="list" class="w-5 h-5 text-orange-500 mr-2"></i>
+                            Exercícios
+                        </h3>
+                        <div id="workout-exercises-list">
+                            ${exercisesHTML}
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="space-y-3">
+                        <button id="start-workout-btn" class="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 transition-all shadow-lg flex items-center justify-center">
+                            <i data-lucide="play" class="w-5 h-5 text-white mr-2"></i>
+                            <span class="text-white font-bold">Iniciar Treino</span>
+                        </button>
+                        ${!isPrebuilt ? `
+                            <button id="edit-workout-btn" class="w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 transition-all border border-gray-700 flex items-center justify-center">
+                                <i data-lucide="edit" class="w-5 h-5 text-white mr-2"></i>
+                                <span class="text-white font-semibold">Editar Treino</span>
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            // Setup event listeners
+            const backBtn = document.getElementById('back-to-workouts-btn');
+            if (backBtn) {
+                backBtn.addEventListener('click', () => {
+                    showScreen('workouts');
+                });
+            }
+            
+            const startWorkoutBtn = document.getElementById('start-workout-btn');
+            if (startWorkoutBtn) {
+                startWorkoutBtn.addEventListener('click', () => {
+                    alert('Funcionalidade de iniciar treino será implementada em breve!');
+                });
+            }
+            
+            const editWorkoutBtn = document.getElementById('edit-workout-btn');
+            if (editWorkoutBtn) {
+                editWorkoutBtn.addEventListener('click', () => {
+                    alert('Funcionalidade de editar treino será implementada em breve!');
+                });
+            }
+            
+            // Re-initialize icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        // Show Create Workout Screen
+        async function showCreateWorkoutScreen() {
+            elements.dashboardScreen.innerHTML = `
+                <div class="p-4 pt-8 h-full overflow-y-auto pb-16 bg-gray-900 text-white">
+                    <header class="flex items-center mb-6">
+                        <button onclick="showScreen('workouts')" class="mr-4 icon-hover">
+                            <i data-lucide="chevron-left" class="w-6 h-6 text-orange-500"></i>
+                        </button>
+                        <h2 class="text-3xl font-bold font-bebas-neue tracking-wider">CRIAR TREINO</h2>
+                    </header>
+                    
+                    <form id="create-workout-form" class="space-y-4">
+                        <div>
+                            <label for="workout-name" class="block text-sm font-semibold mb-2 text-white">Nome do Treino</label>
+                            <input 
+                                type="text" 
+                                id="workout-name" 
+                                required
+                                class="w-full py-3 px-4 rounded-xl border-none focus:ring-2 focus:ring-orange-500 focus:outline-none bg-gray-800 text-white"
+                                placeholder="Ex: Meu Treino de Peito"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label for="workout-description" class="block text-sm font-semibold mb-2 text-white">Descrição (opcional)</label>
+                            <textarea 
+                                id="workout-description" 
+                                rows="3"
+                                class="w-full py-3 px-4 rounded-xl border-none focus:ring-2 focus:ring-orange-500 focus:outline-none bg-gray-800 text-white resize-none"
+                                placeholder="Descreve o teu treino..."
+                            ></textarea>
+                        </div>
+                        
+                        <div class="pt-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold text-white">Exercícios</h3>
+                                <button type="button" id="add-exercise-btn" class="px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm">
+                                    <i data-lucide="plus" class="w-4 h-4 inline mr-1"></i>
+                                    Adicionar
+                                </button>
+                            </div>
+                            <div id="selected-exercises-list" class="space-y-3 mb-4">
+                                <p class="text-gray-400 text-sm text-center py-4">Nenhum exercício adicionado ainda</p>
+                            </div>
+                        </div>
+                        
+                        <button 
+                            type="submit"
+                            class="w-full py-3 mt-6 text-lg font-bold rounded-xl transition-all shadow-xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white"
+                        >
+                            Criar Treino
+                        </button>
+                    </form>
+                </div>
+            `;
+            
+            // Setup form
+            const form = document.getElementById('create-workout-form');
+            const addExerciseBtn = document.getElementById('add-exercise-btn');
+            
+            if (addExerciseBtn) {
+                addExerciseBtn.addEventListener('click', () => showExerciseSelection());
+            }
+            
+            if (form) {
+                form.addEventListener('submit', handleCreateWorkout);
+            }
+            
+            // Initialize icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        // Show Exercise Selection
+        async function showExerciseSelection() {
+            try {
+                // Create modal with loading state
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4';
+                modal.innerHTML = `
+                    <div class="bg-gray-800 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-gray-700 flex items-center justify-between">
+                            <h3 class="text-xl font-bold text-white">Selecionar Exercício</h3>
+                            <button id="close-exercise-modal" class="text-gray-400 hover:text-white">
+                                <i data-lucide="x" class="w-6 h-6"></i>
+                            </button>
+                        </div>
+                        <div class="p-4 border-b border-gray-700">
+                            <div class="flex items-center bg-gray-700 rounded-lg px-3 py-2">
+                                <i data-lucide="search" class="w-5 h-5 text-gray-400 mr-2"></i>
+                                <input 
+                                    type="text" 
+                                    id="exercise-search-input" 
+                                    placeholder="Pesquisar exercícios..."
+                                    class="flex-1 bg-transparent text-white placeholder-gray-400 focus:outline-none"
+                                />
+                            </div>
+                        </div>
+                        <div id="exercise-list-container" class="overflow-y-auto p-4 flex-1">
+                            <div class="text-center py-8 text-gray-400">
+                                <i data-lucide="loader" class="w-8 h-8 mx-auto mb-2 animate-spin"></i>
+                                <p>A carregar exercícios...</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+
+                // Load all exercises from Firestore
+                const exercisesRef = window.Firebase.collection(window.Firebase.db, 'exercise_library');
+                const querySnapshot = await window.Firebase.getDocs(exercisesRef);
+                
+                const exercises = [];
+                querySnapshot.forEach((doc) => {
+                    exercises.push({ id: doc.id, ...doc.data() });
+                });
+
+                if (exercises.length === 0) {
+                    document.getElementById('exercise-list-container').innerHTML = `
+                        <div class="text-center py-8 text-gray-400">
+                            <i data-lucide="alert-circle" class="w-12 h-12 mx-auto mb-3 text-gray-500"></i>
+                            <p>Nenhum exercício encontrado na base de dados.</p>
+                        </div>
+                    `;
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                    return;
+                }
+
+                // Group by category
+                const exercisesByCategory = exercises.reduce((acc, ex) => {
+                    const category = ex.categoryName || ex.category || ex.group || 'Outros';
+                    if (!acc[category]) acc[category] = [];
+                    acc[category].push(ex);
+                    return acc;
+                }, {});
+
+                // Function to render exercises
+                function renderExercises(exercisesToRender) {
+                    const filteredByCategory = exercisesToRender.reduce((acc, ex) => {
+                        const category = ex.categoryName || ex.category || ex.group || 'Outros';
+                        if (!acc[category]) acc[category] = [];
+                        acc[category].push(ex);
+                        return acc;
+                    }, {});
+
+                    return Object.entries(filteredByCategory).map(([category, categoryExercises]) => `
+                        <div class="mb-6">
+                            <h4 class="text-lg font-semibold text-orange-500 mb-3">${category}</h4>
+                            <div class="space-y-2">
+                                ${categoryExercises.map(ex => `
+                                    <button 
+                                        type="button"
+                                        class="exercise-option w-full p-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-left transition-colors"
+                                        data-exercise-id="${ex.id}"
+                                        data-exercise-name="${ex.name}"
+                                    >
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex-1">
+                                                <p class="text-white font-semibold">${ex.name}</p>
+                                                ${ex.primaryMuscles || ex.primary ? `
+                                                    <p class="text-xs text-gray-400 mt-1">
+                                                        ${Array.isArray(ex.primaryMuscles) ? ex.primaryMuscles.join(', ') : 
+                                                          Array.isArray(ex.primary) ? ex.primary.join(', ') : 
+                                                          ex.primaryMuscles || ex.primary}
+                                                    </p>
+                                                ` : ''}
+                                            </div>
+                                            <i data-lucide="plus" class="w-5 h-5 text-orange-500 ml-2"></i>
+                                        </div>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                // Render all exercises
+                document.getElementById('exercise-list-container').innerHTML = renderExercises(exercises);
+
+                // Search functionality
+                const searchInput = document.getElementById('exercise-search-input');
+                searchInput.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase().trim();
+                    const container = document.getElementById('exercise-list-container');
+                    
+                    if (searchTerm === '') {
+                        container.innerHTML = renderExercises(exercises);
+                    } else {
+                        const filtered = exercises.filter(ex => 
+                            ex.name.toLowerCase().includes(searchTerm) ||
+                            (ex.primaryMuscles && Array.isArray(ex.primaryMuscles) && ex.primaryMuscles.some(m => m.toLowerCase().includes(searchTerm))) ||
+                            (ex.primary && Array.isArray(ex.primary) && ex.primary.some(m => m.toLowerCase().includes(searchTerm))) ||
+                            (ex.categoryName && ex.categoryName.toLowerCase().includes(searchTerm)) ||
+                            (ex.category && ex.category.toLowerCase().includes(searchTerm)) ||
+                            (ex.group && ex.group.toLowerCase().includes(searchTerm))
+                        );
+                        
+                        if (filtered.length === 0) {
+                            container.innerHTML = `
+                                <div class="text-center py-8 text-gray-400">
+                                    <i data-lucide="search-x" class="w-12 h-12 mx-auto mb-3 text-gray-500"></i>
+                                    <p>Nenhum exercício encontrado para "${searchTerm}"</p>
+                                </div>
+                            `;
+                        } else {
+                            container.innerHTML = renderExercises(filtered);
+                        }
+                    }
+                    
+                    // Re-attach event listeners and reinitialize icons
+                    attachExerciseListeners();
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                });
+
+                // Function to attach exercise selection listeners
+                function attachExerciseListeners() {
+                    document.querySelectorAll('.exercise-option').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const exerciseId = btn.dataset.exerciseId;
+                            const exerciseName = btn.dataset.exerciseName;
+                            addExerciseToWorkout(exerciseId, exerciseName);
+                            document.body.removeChild(modal);
+                        });
+                    });
+                }
+
+                // Attach initial listeners
+                attachExerciseListeners();
+
+                // Close modal
+                document.getElementById('close-exercise-modal').addEventListener('click', () => {
+                    document.body.removeChild(modal);
+                });
+
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        document.body.removeChild(modal);
+                    }
+                });
+
+                // Initialize icons
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar exercícios:', error);
+                const container = document.getElementById('exercise-list-container');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-8 text-red-400">
+                            <i data-lucide="alert-circle" class="w-12 h-12 mx-auto mb-3 text-red-500"></i>
+                            <p class="font-semibold mb-2">Erro ao carregar exercícios</p>
+                            <p class="text-sm text-gray-400">${error.message}</p>
+                        </div>
+                    `;
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                } else {
+                    alert('Erro ao carregar exercícios: ' + error.message);
+                }
+            }
+        }
+
+        // Add Exercise to Workout
+        function addExerciseToWorkout(exerciseId, exerciseName) {
+            const exercisesList = document.getElementById('selected-exercises-list');
+            if (!exercisesList) return;
+
+            // Check if already exists
+            if (exercisesList.querySelector(`[data-exercise-id="${exerciseId}"]`)) {
+                alert('Este exercício já foi adicionado');
+                return;
+            }
+
+            // Remove empty message
+            if (exercisesList.querySelector('p')) {
+                exercisesList.innerHTML = '';
+            }
+
+            const exerciseCard = document.createElement('div');
+            exerciseCard.className = 'p-3 rounded-lg bg-gray-800 border border-gray-700';
+            exerciseCard.dataset.exerciseId = exerciseId;
+            exerciseCard.innerHTML = `
+                <div class="flex items-start justify-between mb-2">
+                    <div class="flex-1">
+                        <p class="text-white font-semibold">${exerciseName}</p>
+                        <div class="grid grid-cols-3 gap-2 mt-2">
+                            <div>
+                                <label class="text-xs text-gray-400">Séries</label>
+                                <input type="number" min="1" value="3" class="exercise-sets w-full px-2 py-1 rounded bg-gray-700 text-white text-sm" />
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-400">Reps</label>
+                                <input type="text" value="10-12" class="exercise-reps w-full px-2 py-1 rounded bg-gray-700 text-white text-sm" />
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-400">Descanso (s)</label>
+                                <input type="number" min="0" value="60" class="exercise-rest w-full px-2 py-1 rounded bg-gray-700 text-white text-sm" />
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="remove-exercise ml-2 text-red-400 hover:text-red-300">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            `;
+
+            // Remove exercise
+            exerciseCard.querySelector('.remove-exercise').addEventListener('click', () => {
+                exerciseCard.remove();
+                if (exercisesList.children.length === 0) {
+                    exercisesList.innerHTML = '<p class="text-gray-400 text-sm text-center py-4">Nenhum exercício adicionado ainda</p>';
+                }
+            });
+
+            exercisesList.appendChild(exerciseCard);
+
+            // Initialize icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        // Handle Create Workout
+        async function handleCreateWorkout(e) {
+            e.preventDefault();
+            
+            if (!AppState.currentUser) {
+                alert('Precisas de estar logado para criar um treino');
+                return;
+            }
+
+            const name = document.getElementById('workout-name').value;
+            const description = document.getElementById('workout-description').value;
+            const exercisesList = document.getElementById('selected-exercises-list');
+            
+            // Get exercises
+            const exercises = [];
+            exercisesList.querySelectorAll('[data-exercise-id]').forEach(card => {
+                exercises.push({
+                    exerciseId: card.dataset.exerciseId,
+                    name: card.querySelector('p').textContent,
+                    sets: parseInt(card.querySelector('.exercise-sets').value) || 3,
+                    reps: card.querySelector('.exercise-reps').value || '10-12',
+                    restSeconds: parseInt(card.querySelector('.exercise-rest').value) || 60
+                });
+            });
+
+            if (exercises.length === 0) {
+                alert('Adiciona pelo menos um exercício ao treino');
+                return;
+            }
+
+            try {
+                const workoutData = {
+                    userId: AppState.currentUser.uid,
+                    name: name,
+                    description: description || '',
+                    exercises: exercises,
+                    isPrebuilt: false,
+                    createdAt: new Date()
+                };
+
+                await window.Firebase.addDoc(
+                    window.Firebase.collection(window.Firebase.db, 'workouts'),
+                    workoutData
+                );
+
+                alert('Treino criado com sucesso!');
+                showScreen('workouts');
+            } catch (error) {
+                console.error('Erro ao criar treino:', error);
+                alert('Erro ao criar treino: ' + error.message);
+            }
+        }
+
+        function showLoading(show) {
+            if (show) {
+                elements.loadingScreen.classList.remove('hidden');
+                elements.app.classList.add('hidden');
+            } else {
+                elements.loadingScreen.classList.add('hidden');
+                elements.app.classList.remove('hidden');
+            }
+            AppState.loading = show;
+        }
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
