@@ -1513,33 +1513,76 @@
             let exercisesHTML = '';
             if (workout.exercises && workout.exercises.length > 0) {
                 workout.exercises.forEach((exercise, index) => {
-                    exercisesHTML += `
-                        <div class="p-4 rounded-xl bg-gray-800 mb-3 border border-gray-700">
-                            <div class="flex items-start justify-between mb-2">
-                                <div class="flex-1">
-                                    <div class="flex items-center mb-2">
-                                        <span class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-sm mr-3">${index + 1}</span>
-                                        <h4 class="text-lg font-bold text-white">${exercise.name}</h4>
+                    // Check if exercise has series (custom workouts) or sets/reps/rest (prebuilt)
+                    if (exercise.series && Array.isArray(exercise.series)) {
+                        // Custom workout format: show series with reps and weight
+                        let seriesHTML = '';
+                        exercise.series.forEach((series, seriesIndex) => {
+                            seriesHTML += `
+                                <div class="flex items-center justify-between p-2 bg-gray-700 rounded-lg mb-2">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-xs text-gray-400 w-12">Série ${seriesIndex + 1}</span>
+                                        <div class="flex items-center gap-4">
+                                            <div>
+                                                <span class="text-xs text-gray-400">Reps:</span>
+                                                <span class="text-white font-semibold ml-1">${series.reps || 'N/A'}</span>
+                                            </div>
+                                            <div>
+                                                <span class="text-xs text-gray-400">Peso:</span>
+                                                <span class="text-white font-semibold ml-1">${series.weight ? series.weight + ' kg' : 'N/A'}</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    ${exercise.notes ? `<p class="text-sm text-gray-400 ml-11 mb-2">${exercise.notes}</p>` : ''}
+                                </div>
+                            `;
+                        });
+                        
+                        exercisesHTML += `
+                            <div class="p-4 rounded-xl bg-gray-800 mb-3 border border-gray-700">
+                                <div class="flex items-start justify-between mb-2">
+                                    <div class="flex-1">
+                                        <div class="flex items-center mb-2">
+                                            <span class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-sm mr-3">${index + 1}</span>
+                                            <h4 class="text-lg font-bold text-white">${exercise.name}</h4>
+                                        </div>
+                                        ${exercise.notes ? `<p class="text-sm text-gray-400 ml-11 mb-2">${exercise.notes}</p>` : ''}
+                                    </div>
+                                </div>
+                                <div class="ml-11 mt-3">
+                                    ${seriesHTML}
                                 </div>
                             </div>
-                            <div class="grid grid-cols-3 gap-3 ml-11">
-                                <div class="bg-gray-700 rounded-lg p-2 text-center">
-                                    <p class="text-xs text-gray-400 mb-1">Séries</p>
-                                    <p class="text-white font-bold">${exercise.sets || 'N/A'}</p>
+                        `;
+                    } else {
+                        // Prebuilt workout format: show sets, reps, rest
+                        exercisesHTML += `
+                            <div class="p-4 rounded-xl bg-gray-800 mb-3 border border-gray-700">
+                                <div class="flex items-start justify-between mb-2">
+                                    <div class="flex-1">
+                                        <div class="flex items-center mb-2">
+                                            <span class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-sm mr-3">${index + 1}</span>
+                                            <h4 class="text-lg font-bold text-white">${exercise.name}</h4>
+                                        </div>
+                                        ${exercise.notes ? `<p class="text-sm text-gray-400 ml-11 mb-2">${exercise.notes}</p>` : ''}
+                                    </div>
                                 </div>
-                                <div class="bg-gray-700 rounded-lg p-2 text-center">
-                                    <p class="text-xs text-gray-400 mb-1">Reps</p>
-                                    <p class="text-white font-bold">${exercise.reps || 'N/A'}</p>
-                                </div>
-                                <div class="bg-gray-700 rounded-lg p-2 text-center">
-                                    <p class="text-xs text-gray-400 mb-1">Descanso</p>
-                                    <p class="text-white font-bold">${exercise.restSeconds ? exercise.restSeconds + 's' : 'N/A'}</p>
+                                <div class="grid grid-cols-3 gap-3 ml-11">
+                                    <div class="bg-gray-700 rounded-lg p-2 text-center">
+                                        <p class="text-xs text-gray-400 mb-1">Séries</p>
+                                        <p class="text-white font-bold">${exercise.sets || 'N/A'}</p>
+                                    </div>
+                                    <div class="bg-gray-700 rounded-lg p-2 text-center">
+                                        <p class="text-xs text-gray-400 mb-1">Reps</p>
+                                        <p class="text-white font-bold">${exercise.reps || 'N/A'}</p>
+                                    </div>
+                                    <div class="bg-gray-700 rounded-lg p-2 text-center">
+                                        <p class="text-xs text-gray-400 mb-1">Descanso</p>
+                                        <p class="text-white font-bold">${exercise.restSeconds ? exercise.restSeconds + 's' : 'N/A'}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    `;
+                        `;
+                    }
                 });
             } else {
                 exercisesHTML = `
@@ -1927,32 +1970,84 @@
             }
 
             const exerciseCard = document.createElement('div');
-            exerciseCard.className = 'p-3 rounded-lg bg-gray-800 border border-gray-700';
+            exerciseCard.className = 'p-3 rounded-lg bg-gray-800 border border-gray-700 mb-3';
             exerciseCard.dataset.exerciseId = exerciseId;
             exerciseCard.innerHTML = `
-                <div class="flex items-start justify-between mb-2">
+                <div class="flex items-start justify-between mb-3">
                     <div class="flex-1">
-                        <p class="text-white font-semibold">${exerciseName}</p>
-                        <div class="grid grid-cols-3 gap-2 mt-2">
-                            <div>
-                                <label class="text-xs text-gray-400">Séries</label>
-                                <input type="number" min="1" value="3" class="exercise-sets w-full px-2 py-1 rounded bg-gray-700 text-white text-sm" />
-                            </div>
-                            <div>
-                                <label class="text-xs text-gray-400">Reps</label>
-                                <input type="text" value="10-12" class="exercise-reps w-full px-2 py-1 rounded bg-gray-700 text-white text-sm" />
-                            </div>
-                            <div>
-                                <label class="text-xs text-gray-400">Descanso (s)</label>
-                                <input type="number" min="0" value="60" class="exercise-rest w-full px-2 py-1 rounded bg-gray-700 text-white text-sm" />
-                            </div>
+                        <p class="text-white font-semibold mb-3">${exerciseName}</p>
+                        <div class="series-container space-y-2">
+                            <!-- Séries serão adicionadas aqui -->
                         </div>
+                        <button type="button" class="add-series-btn mt-3 px-3 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold flex items-center">
+                            <i data-lucide="plus" class="w-4 h-4 mr-1"></i>
+                            Adicionar Série
+                        </button>
                     </div>
                     <button type="button" class="remove-exercise ml-2 text-red-400 hover:text-red-300">
                         <i data-lucide="trash-2" class="w-5 h-5"></i>
                     </button>
                 </div>
             `;
+
+            const seriesContainer = exerciseCard.querySelector('.series-container');
+            const addSeriesBtn = exerciseCard.querySelector('.add-series-btn');
+
+            // Function to add a new series
+            function addSeries(seriesNumber) {
+                const seriesRow = document.createElement('div');
+                seriesRow.className = 'series-row flex items-center gap-2 p-2 rounded bg-gray-700';
+                seriesRow.dataset.seriesNumber = seriesNumber;
+                seriesRow.innerHTML = `
+                    <div class="flex-shrink-0 w-16">
+                        <span class="text-xs text-gray-400">Série ${seriesNumber}</span>
+                    </div>
+                    <div class="flex-1">
+                        <label class="text-xs text-gray-400 block mb-1">Repetições</label>
+                        <input type="text" placeholder="10-12" class="series-reps w-full px-2 py-1 rounded bg-gray-600 text-white text-sm" />
+                    </div>
+                    <div class="flex-1">
+                        <label class="text-xs text-gray-400 block mb-1">Peso (kg)</label>
+                        <input type="number" min="0" step="0.5" placeholder="0" class="series-weight w-full px-2 py-1 rounded bg-gray-600 text-white text-sm" />
+                    </div>
+                    <button type="button" class="remove-series text-red-400 hover:text-red-300 flex-shrink-0 mt-5">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                `;
+
+                // Remove series button
+                seriesRow.querySelector('.remove-series').addEventListener('click', () => {
+                    seriesRow.remove();
+                    updateSeriesNumbers();
+                });
+
+                seriesContainer.appendChild(seriesRow);
+                updateSeriesNumbers();
+
+                // Initialize icons
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            }
+
+            // Function to update series numbers after removal
+            function updateSeriesNumbers() {
+                const seriesRows = seriesContainer.querySelectorAll('.series-row');
+                seriesRows.forEach((row, index) => {
+                    const seriesNumber = index + 1;
+                    row.dataset.seriesNumber = seriesNumber;
+                    row.querySelector('span').textContent = `Série ${seriesNumber}`;
+                });
+            }
+
+            // Add first series automatically
+            addSeries(1);
+
+            // Add series button
+            addSeriesBtn.addEventListener('click', () => {
+                const currentSeriesCount = seriesContainer.querySelectorAll('.series-row').length;
+                addSeries(currentSeriesCount + 1);
+            });
 
             // Remove exercise
             exerciseCard.querySelector('.remove-exercise').addEventListener('click', () => {
@@ -1986,17 +2081,32 @@
             // Get exercises
             const exercises = [];
             exercisesList.querySelectorAll('[data-exercise-id]').forEach(card => {
-                exercises.push({
-                    exerciseId: card.dataset.exerciseId,
-                    name: card.querySelector('p').textContent,
-                    sets: parseInt(card.querySelector('.exercise-sets').value) || 3,
-                    reps: card.querySelector('.exercise-reps').value || '10-12',
-                    restSeconds: parseInt(card.querySelector('.exercise-rest').value) || 60
+                const seriesRows = card.querySelectorAll('.series-row');
+                const series = [];
+                
+                seriesRows.forEach(row => {
+                    const reps = row.querySelector('.series-reps').value.trim();
+                    const weight = parseFloat(row.querySelector('.series-weight').value) || 0;
+                    
+                    if (reps) { // Only add series if reps are filled
+                        series.push({
+                            reps: reps,
+                            weight: weight
+                        });
+                    }
                 });
+
+                if (series.length > 0) { // Only add exercise if it has at least one series
+                    exercises.push({
+                        exerciseId: card.dataset.exerciseId,
+                        name: card.querySelector('p.text-white.font-semibold').textContent,
+                        series: series
+                    });
+                }
             });
 
             if (exercises.length === 0) {
-                alert('Adiciona pelo menos um exercício ao treino');
+                alert('Adiciona pelo menos um exercício com séries ao treino');
                 return;
             }
 
