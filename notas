@@ -188,3 +188,34 @@ Páginas Secundárias:
 - Firebase para backend (quando implementado)
 
 O código está bem estruturado para uma aplicação de fitness, com um design system consistente e uma arquitetura que facilita a integração com Firebase.
+
+
+
+
+
+pagina principal:
+
+gráfico de barras que contem 2 categorias: duranção do treino e peso total levantado, a cada dia de uma semana
+
+painel rapido: profissionais, adaptive zone (treinos para deficientes motores), em vez de metas = conquistas
+
+conquistas:
+PRs
+Maior volume na série
+Sequencia semanal: de 2 a 5 ou seja se o user for 2 dias por semana tem uma chama fraca, 5 dias tem uma chama forte
+
+historico de treinos já feitos
+
+
+na navbar inferior: Home, Workouts e Community ✅
+
+tem que haver uma componente de amigos onde se possa ver um perfil limitado enquanto nao for amigo e ver mais coisas quando for amigo
+deve se escolher entre ter uma conta privada ou publica
+
+privado só permite que outros vejam o treino, quem o user escolher
+publico: toda a gente ve
+
+Community: poder ver o treino de outras pessoas
+
+
+

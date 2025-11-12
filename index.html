@@ -1920,9 +1920,10 @@
                 return;
             }
 
-            // Remove empty message
-            if (exercisesList.querySelector('p')) {
-                exercisesList.innerHTML = '';
+            // Remove empty message (only if it's the placeholder message)
+            const emptyMessage = exercisesList.querySelector('p.text-gray-400.text-sm.text-center');
+            if (emptyMessage) {
+                emptyMessage.remove();
             }
 
             const exerciseCard = document.createElement('div');
